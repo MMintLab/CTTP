@@ -1,0 +1,198 @@
+dataset_0:
+  dataset_type: 'tactile'
+
+  bubbles_transforms:
+  gelslim_transforms:
+
+  image_size: 224
+  
+  bubbles_stats:
+    mean: [0.0048]
+    std: [0.0047]
+    min: [-0.0188]
+    max: [0.0264]
+
+  gelslim_stats:
+    mean: [-0.0107, -0.0063, -0.0087]
+    std: [0.0687, 0.0428, 0.0576]
+    min: [-0.6471,-0.5098,-0.7333]
+    max: [0.7725,0.7333,0.6941]
+
+  bubbles_path: '/home/samanta/tactile_style_transfer/new_processed_data/bubbles/data'
+  gelslim_path: '/home/samanta/tactile_style_transfer/new_processed_data/gelslims/data'
+  num_distinct_angles: 21
+  num_angles_skip: 3
+  tools:
+    training_tools:
+      - 'pattern_01_2_lines_angle_1'
+      - 'pattern_02_2_lines_angle_2'
+      - 'pattern_03_2_lines_angle_3'
+      - 'pattern_04_3_lines_angle_1'
+      - 'pattern_06_5_lines_angle_1'
+      - 'pattern_31_rod'
+      - 'pattern_32'
+      - 'pattern_33'
+      - 'pattern_37'
+
+    test_tools:
+      - 'pattern_05_3_lines_angle_2'
+      - 'pattern_35'
+      - 'pattern_36'
+
+dataset_1:
+  dataset_type: 'tactile'
+
+  bubbles_transforms:
+    - 'resize'
+    - 'normalize'
+
+  gelslim_transforms:
+    - 'resize'
+    - 'normalize'
+
+  image_size: 224
+
+  bubbles_stats:
+    mean: [0.0048]
+    std: [0.0047]
+    min: [-0.0188]
+    max: [0.0264]
+
+  gelslim_stats:
+    mean: [-0.0107, -0.0063, -0.0087]
+    std: [0.0687, 0.0428, 0.0576]
+    min: [-0.6471,-0.5098,-0.7333]
+    max: [0.7725,0.7333,0.6941]
+
+  bubbles_path: '/home/samanta/tactile_style_transfer/new_processed_data/bubbles/data'
+  gelslim_path: '/home/samanta/tactile_style_transfer/new_processed_data/gelslims/data'
+  num_distinct_angles: 21
+  num_angles_skip: 3
+  n_classes_training: 9
+  n_classes_test: 3
+  tools:
+    training_tools:
+      - 'pattern_01_2_lines_angle_1'
+      - 'pattern_02_2_lines_angle_2'
+      - 'pattern_03_2_lines_angle_3'
+      - 'pattern_04_3_lines_angle_1'
+      - 'pattern_06_5_lines_angle_1'
+      - 'pattern_31_rod'
+      - 'pattern_32'
+      - 'pattern_33'
+      - 'pattern_37'
+
+    test_tools:
+      - 'pattern_05_3_lines_angle_2'
+      - 'pattern_35'
+      - 'pattern_36'
+
+dataset_2:
+  dataset_type: 'stl_10'
+  image_size: 224
+  train_percent: 1.0
+
+dataset_3:
+  dataset_type: 'stl_10'
+  image_size: 224
+  train_percent: 0.8
+
+dataset_4:
+  dataset_type: 'tactile'
+
+  bubbles_transforms:
+    - 'resize'
+    - 'normalize'
+    - 'in_range'
+
+  gelslim_transforms:
+    - 'resize'
+    - 'normalize'
+    - 'in_range'
+
+  image_size: 224
+
+  bubbles_stats:
+    mean: [0.0048]
+    std: [0.0047]
+    min: [-0.0188]
+    max: [0.0264]
+
+  gelslim_stats:
+    mean: [-0.0107, -0.0063, -0.0087]
+    std: [0.0687, 0.0428, 0.0576]
+    min: [-0.6471,-0.5098,-0.7333]
+    max: [0.7725,0.7333,0.6941]
+
+  bubbles_path: '/home/samanta/tactile_style_transfer/new_processed_data/bubbles/data'
+  gelslim_path: '/home/samanta/tactile_style_transfer/new_processed_data/gelslims/data'
+  num_distinct_angles: 21
+  num_angles_skip: 3
+  
+  tools:
+    training_tools:
+      - 'pattern_01_2_lines_angle_1'
+      - 'pattern_02_2_lines_angle_2'
+      - 'pattern_03_2_lines_angle_3'
+      - 'pattern_04_3_lines_angle_1'
+      - 'pattern_06_5_lines_angle_1'
+      - 'pattern_31_rod'
+      - 'pattern_32'
+      - 'pattern_33'
+      - 'pattern_37'
+
+    test_tools:
+      - 'pattern_05_3_lines_angle_2'
+      - 'pattern_35'
+      - 'pattern_36'
+
+dataset_5:
+  dataset_type: 'tactile'
+
+  bubbles_transforms:
+    - 'resize'
+    - 'normalize'
+
+  gelslim_transforms:
+    - 'resize'
+    - 'normalize'
+
+  image_size: 224
+
+  bubbles_stats:
+    mean: [0.0027]
+    std: [0.0034]
+    min: [-0.0098]
+    max: [0.0175]
+
+  gelslim_stats:
+    mean: [-0.0101, -0.0026, -0.0007]
+    std: [0.0862, 0.0546, 0.0571]
+    min: [-0.8693,-0.5682,-0.7339]
+    max: [0.7772,0.6811,0.5792]
+
+  bubbles_path: '/home/samanta/tactile_style_transfer/processed_data/bubbles/bubbles_training_data_filtered_flipped'
+  gelslim_path: '/home/samanta/tactile_style_transfer/processed_data/gelslims/gelslim_training_data_filtered_flipped'
+  num_distinct_angles: 21
+  num_angles_skip: 1
+  n_classes_training: 12
+  n_classes_test: 3
+  tools:
+    training_tools:
+      - 'pattern_01_2_lines_angle_1'
+      - 'pattern_02_2_lines_angle_2'
+      - 'pattern_03_2_lines_angle_3'
+      - 'pattern_04_3_lines_angle_1'
+      - 'pattern_06_5_lines_angle_1'
+      - 'pattern_31_rod'
+      - 'pattern_07_curves_degree_30_radios_10'
+      - 'pattern_08_curves_degree_45_radios_10'
+      - 'pattern_09_curves_degree_120_radios_10'
+      - 'pattern_11_curves_degree_30_radios_20'
+      - 'pattern_12_curves_degree_45_radios_20'
+      - 'pattern_14_curves_degree_30_radios_30'
+
+    test_tools:
+      - 'pattern_05_3_lines_angle_2'
+      - 'pattern_10_curves_degree_150_radios_10'
+      - 'pattern_13_curves_degree_120_radios_20'

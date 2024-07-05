@@ -1,3 +1,4 @@
 /checkpoints
 /datasets
 /scripts/wandb
+/joint_embedding_learning/barlow_twins_paper_implementation

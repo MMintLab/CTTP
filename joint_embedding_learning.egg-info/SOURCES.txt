@@ -1,0 +1,5 @@
+setup.py
+joint_embedding_learning.egg-info/PKG-INFO
+joint_embedding_learning.egg-info/SOURCES.txt
+joint_embedding_learning.egg-info/dependency_links.txt
+joint_embedding_learning.egg-info/top_level.txt
