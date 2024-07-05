@@ -1,4 +1,5 @@
 /checkpoints
 /datasets
 /scripts/wandb
+/joint_embedding_learning.egg-info
 /joint_embedding_learning/barlow_twins_paper_implementation
