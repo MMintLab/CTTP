@@ -1,5 +1,6 @@
 import torch
 import numpy as np
+import random
 import argparse
 from tqdm import tqdm
 from joint_embedding_learning.data.datasets import get_all_contrastive_datasets
@@ -95,7 +96,12 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
         setattr(args, key, value)
     
     torch.manual_seed(args.seed)
+    torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)
+    random.seed(args.seed)
+    torch.backends.cudnn.deterministic = True
+    torch.backends.cudnn.benchmark = False
+
     dataset_type = dataset_details['dataset_type']
     model_type = model_name
     
@@ -124,8 +130,8 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
 
     args.global_step = 0
     args.current_epoch = 0
+    
     for epoch in tqdm(range(args.start_epoch, args.epochs), desc="Epochs"):
-    # for epoch in range(args.start_epoch, args.epochs):
         lr = optimizer.param_groups[0]["lr"]
 
         loss_epoch, loss_vector, x_i, x_j = train_step(args, train_loaders, model, criterion, optimizer, wandb)
