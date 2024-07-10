@@ -84,9 +84,9 @@ class BarlowLoss(nn.Module):
         return loss
 
 class BarlowTwins(nn.Module):
-    def __init__(self, projector):
+    def __init__(self, projector, pretrained = False):
         super().__init__()
-        self.backbone = torchvision.models.resnet50(zero_init_residual=True)
+        self.backbone = torchvision.models.resnet50(zero_init_residual=True, pretrained=pretrained)
         self.backbone.fc = nn.Identity()
 
         # projector

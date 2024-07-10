@@ -103,7 +103,7 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
 
     for key, value in model_details.items():
         setattr(args, key, value)
-    
+
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
     np.random.seed(args.seed)

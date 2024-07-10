@@ -16,16 +16,14 @@ def train_step(args, train_loaders, model, criterion, optimizer, scaler, wandb):
     step_lr = args.current_epoch * loader_len
     for loader in train_loaders:
         for step, ((x_i, x_j), _) in tqdm(enumerate(loader)):
-            optimizer.zero_grad()
             x_i = x_i.to(args.device)
             x_j = x_j.to(args.device)
-
-            # positive pair, with encoding
-            h_i, h_j, z_i, z_j = model(x_i, x_j)
 
             adjust_learning_rate(args.epochs, args.batch_size, args.learning_rate_weights, args.learning_rate_biases, optimizer, loader_len, step_lr)
             optimizer.zero_grad()
             with torch.cuda.amp.autocast():
+                # positive pair, with encoding
+                h_i, h_j, z_i, z_j = model(x_i, x_j)
                 loss = criterion(z_i, z_j)
             scaler.scale(loss).backward()
             scaler.step(optimizer)
@@ -117,6 +115,8 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
     # initialize model
     model = BarlowTwins(args.projector)
     model = model.to(args.device)
+
+    # optimizer / loss
     param_weights = []
     param_biases = []
     for param in model.parameters():
@@ -125,11 +125,11 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
         else:
             param_weights.append(param)
     parameters = [{'params': param_weights}, {'params': param_biases}]
-
-    # optimizer / loss
     optimizer = LARS(parameters, lr=0, weight_decay=args.weight_decay,
                      weight_decay_filter=True,
                      lars_adaptation_filter=True)
+    
+    # Criterion
     criterion = BarlowLoss(args.projector, args.batch_size, args.lambd, args.device)
 
     args.global_step = 0
@@ -141,7 +141,7 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
         lr = optimizer.param_groups[0]["lr"]
 
         loss_epoch, loss_vector, x_i, x_j = train_step(args, train_loaders, model, criterion, optimizer, scaler, wandb)
-        wandb.log({"Loss_train/Barlow_Loss": loss_epoch, "Loss_train/embedding_diff":loss_vector, "Misc/learning_rate": lr, "Epoch": epoch})
+        wandb.log({"Loss_train/Model_Loss": loss_epoch, "Loss_train/embedding_diff":loss_vector, "Misc/learning_rate": lr, "Epoch": epoch})
 
         with torch.no_grad():
             # model.eval()

@@ -318,6 +318,8 @@ def logistic_regression_STL(logistic_batch_size, logistic_epochs, contrastive_mo
     criterion = torch.nn.CrossEntropyLoss()
 
     save_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, model_name, run_name)
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
 
     print("### Creating features from pre-trained context model ###")
     (train_X, train_y, test_X, test_y) = get_features(
@@ -337,7 +339,8 @@ def logistic_regression_STL(logistic_batch_size, logistic_epochs, contrastive_mo
         )
 
     # Save final losses and accuracies to a CSV file
-    csv_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, model_name, run_name, 'results.csv')
+    csv_file = os.path.join(save_path, 'results.csv')
+    # csv_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, model_name, run_name, 'results.csv')
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Train Loss', 'Train Accuracy', 'Test Loss', 'Test Accuracy'])
@@ -369,6 +372,10 @@ def logistic_regression_tactile(logistic_batch_size, logistic_epochs, contrastiv
     criterion = torch.nn.CrossEntropyLoss()
 
     save_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, model_name, run_name)
+
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+
     train_X_bubbles, train_y_bubbles, train_X_gelslim, train_y_gelslim = train_features
     test_X_bubbles, test_y_bubbles, test_X_gelslim, test_y_gelslim = test_features
     arr_train_bubbles_loader, arr_test_bubbles_loader = create_data_loaders_from_arrays(train_X_bubbles, train_y_bubbles, test_X_bubbles, test_y_bubbles, logistic_batch_size)
@@ -383,7 +390,7 @@ def logistic_regression_tactile(logistic_batch_size, logistic_epochs, contrastiv
         )
 
     # Save final losses and accuracies to a CSV file
-    csv_file = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, model_name, run_name, 'results.csv')
+    csv_file = os.path.join(save_path, 'results.csv')
     with open(csv_file, 'w', newline='') as file:
         writer = csv.writer(file)
         writer.writerow(['Train Bubbles Loss', 'Train Bubbles Accuracy', 'Train Gelslim Loss', 'Train Gelslim Accuracy', 'Test Bubbles Loss', 'Test Bubbles Accuracy', 'Test Gelslim Loss', 'Test Gelslim Accuracy'])
@@ -423,7 +430,8 @@ def logistic_regression_tactile(logistic_batch_size, logistic_epochs, contrastiv
 
 def evaluation_tactile(logistic_batch_size, logistic_epochs, contrastive_model, model_name, run_name, train_loader, test_loader, test_dataset, dataset_type, dataset_details, device):
     save_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, model_name, run_name)
-
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
     # Create features from contrastive model
     print("### Creating features from pre-trained context model ###")
     (train_X_bubbles, train_y_bubbles, test_X_bubbles, test_y_bubbles, train_X_gelslim, train_y_gelslim, test_X_gelslim, test_y_gelslim) = get_features(
@@ -459,7 +467,7 @@ if __name__ == "__main__":
     parser.add_argument("--run_name", default="run_proper_logging", type=str)
     parser.add_argument("--logistic_batch_size", default=256, type=int)
     parser.add_argument("--logistic_epochs", default=500, type=int)
-    parser.add_argument("--device", default="cuda:3", type=str)
+    parser.add_argument("--device", default="cuda:0", type=str)
 
     args = parser.parse_args()
 

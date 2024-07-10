@@ -1,5 +1,5 @@
 from joint_embedding_learning.data.datasets import get_all_contrastive_datasets
-from joint_embedding_learning.utils.models_setup import get_trainer
+from joint_embedding_learning.training import train
 import torch
 import os
 import yaml
@@ -35,7 +35,7 @@ if __name__ == '__main__':
         project = 'CMTEJ_debug'
         output_folder = args.model_name + "_" + dataset_details['dataset_type'] + "_" + args.dataset_name + "_" + args.run_name
     else:
-        project = 'CMTEJ_code_checking'
+        project = 'CMTEJ_comparison'
         output_folder = args.model_name + "_" + dataset_details['dataset_type'] + "_" + args.dataset_name + "_" + args.run_name
 
     wandb.init(
@@ -54,5 +54,5 @@ if __name__ == '__main__':
     }
 
     # Model Training
-    trainer = get_trainer(args.model_name)
-    trainer(train_datasets, validation_datasets, args.dataset_name, dataset_details, args.model_name, model_details, wandb, run_name=args.run_name, device=args.device)
+    # trainer = get_trainer(args.model_name)
+    train(train_datasets, validation_datasets, args.dataset_name, dataset_details, args.model_name, model_details, wandb, run_name=args.run_name, device=args.device)

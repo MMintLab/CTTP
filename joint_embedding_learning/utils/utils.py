@@ -1,35 +1,66 @@
 import os
 import torch
 from simclr import SimCLR
-from simclr.modules import LARS
+from simclr.modules import LARS as LARS_simclr
 import yaml
+from simclr.modules import NT_Xent
+from joint_embedding_learning.barlow_twins.barlow import BarlowLoss, LARS
 
 
-def load_optimizer(args, model):
+def load_optimizer(args, model_name, model):
 
-    scheduler = None
-    if args.optimizer == "Adam":
-        optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)  # TODO: LARS
-    elif args.optimizer == "LARS":
-        # optimized using LARS with linear learning rate scaling
-        # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
-        learning_rate = 0.3 * args.batch_size / 256
-        optimizer = LARS(
-            model.parameters(),
-            lr=learning_rate,
-            weight_decay=args.weight_decay,
-            exclude_from_weight_decay=["batch_normalization", "bias"],
-        )
+    if model_name == 'simclr':
+        scheduler = None
+        scaler = None
+        if args.optimizer == "Adam":
+            optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)  # TODO: LARS
+        elif args.optimizer == "LARS":
+            # optimized using LARS with linear learning rate scaling
+            # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
+            learning_rate = 0.3 * args.batch_size / 256
+            optimizer = LARS_simclr(
+                model.parameters(),
+                lr=learning_rate,
+                weight_decay=args.weight_decay,
+                exclude_from_weight_decay=["batch_normalization", "bias"],
+            )
 
-        # "decay the learning rate with the cosine decay schedule without restarts"
-        scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, args.epochs, eta_min=0, last_epoch=-1
-        )
+            # "decay the learning rate with the cosine decay schedule without restarts"
+            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
+                optimizer, args.epochs, eta_min=0, last_epoch=-1
+            )
+        else:
+            raise NotImplementedError
+    
+    elif model_name == 'barlow_twins':
+        scheduler = None
+        param_weights = []
+        param_biases = []
+        for param in model.parameters():
+            if param.ndim == 1:
+                param_biases.append(param)
+            else:
+                param_weights.append(param)
+        parameters = [{'params': param_weights}, {'params': param_biases}]
+        optimizer = LARS(parameters, lr=0, weight_decay=args.weight_decay,
+                        weight_decay_filter=True,
+                        lars_adaptation_filter=True)
+        
+        scaler = torch.cuda.amp.GradScaler()
+        
     else:
-        raise NotImplementedError
+        raise ValueError(f"Model {model_name} not found")
+    
+    return optimizer, scheduler, scaler
 
-    return optimizer, scheduler
-
+def get_loss(args, model_name):
+    if model_name == 'simclr':
+        criterion = NT_Xent(args.batch_size, args.temperature, 1)
+    elif model_name == 'barlow_twins':
+        criterion = BarlowLoss(args.projector, args.batch_size, args.lambd, args.device)
+    else:
+        raise ValueError(f"Model {model_name} not found")
+    return criterion
 
 def save_model(model, dataset_name, dataset_type, model_type, dataset_details, model_details, run_name=""):
     path_out = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'checkpoints', dataset_type, model_type, dataset_name +"_run_" + run_name)
