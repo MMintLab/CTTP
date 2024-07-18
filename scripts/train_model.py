@@ -54,5 +54,4 @@ if __name__ == '__main__':
     }
 
     # Model Training
-    # trainer = get_trainer(args.model_name)
     train(train_datasets, validation_datasets, args.dataset_name, dataset_details, args.model_name, model_details, wandb, run_name=args.run_name, device=args.device)

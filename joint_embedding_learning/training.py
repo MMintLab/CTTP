@@ -113,6 +113,13 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
 
     dataset_type = dataset_details['dataset_type']
     model_type = model_name
+
+    print('Batch Size:', args.batch_size)
+
+    if args.model_name == 'simclr':
+        print('Temperature:', args.temperature)
+    elif args.model_name == 'barlow_twins':
+        print('Lambda:', args.lambd)
     
     train_loaders = []
     for dataset in train_datasets:

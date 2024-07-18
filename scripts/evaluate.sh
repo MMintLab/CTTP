@@ -1,0 +1,2 @@
+python /home/samanta/CMTJE/joint_embedding_learning/evaluation.py --dataset_name dataset_1 --run_name dataset_1_run_T_0.1
+python /home/samanta/CMTJE/joint_embedding_learning/evaluation.py --dataset_name dataset_1 --run_name dataset_1_run_T_1.0

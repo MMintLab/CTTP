@@ -24,19 +24,22 @@ barlow_twins:
   seed: 42 # sacred handles automatic seeding when passed in the config
   batch_size: 256
   start_epoch: 0
-  epochs: 100
+  epochs: 4
+00
   pretrain: True 
   learning_rate_weights: 0.2
   learning_rate_biases: 0.0048
 
   # model options
   resnet: "resnet50"
+  projection_dim: 64 # "[...] to project the representation to a 128-dimensional latent space"
   projector: '8192-8192-8192'
   lambd: 0.0051
 
   # loss options
   optimizer: "Adam" # or LARS (experimental)
   weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
+  temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch sizes
 
   # logistic regression options
   logistic_batch_size: 256
