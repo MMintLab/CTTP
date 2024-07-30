@@ -21,15 +21,16 @@ def train_step(args, train_loaders, model_name, model, criterion, optimizer, sca
             x_i = x_i.to(args.device)
             x_j = x_j.to(args.device)
 
-            if model_name == 'simclr':
+            if args.optimizer == "Adam":
                 # positive pair, with encoding
+                # import pdb; pdb.set_trace()
                 optimizer.zero_grad()
                 h_i, h_j, z_i, z_j = model(x_i, x_j)
                 loss = criterion(z_i, z_j)
                 loss.backward()
                 optimizer.step()
 
-            elif model_name == 'barlow_twins':
+            elif args.optimizer == "LARS":
                 adjust_learning_rate(args.epochs, args.batch_size, args.learning_rate_weights, args.learning_rate_biases, optimizer, loader_len, step_lr)
                 optimizer.zero_grad()
                 with torch.cuda.amp.autocast():
@@ -41,7 +42,7 @@ def train_step(args, train_loaders, model_name, model, criterion, optimizer, sca
                 scaler.update()
                 
             else:
-                raise ValueError(f"Model {model_name} not found")
+                raise NotImplementedError
         
             with torch.no_grad():
                 loss_vector_0 = loss_vector_embedding(h_i, h_j)
@@ -115,6 +116,10 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
     model_type = model_name
 
     print('Batch Size:', args.batch_size)
+    print('Optimizer:', args.optimizer)
+    if args.optimizer == "Adam":
+        print('Learning Rate:', args.learning_rate)
+    
 
     if args.model_name == 'simclr':
         print('Temperature:', args.temperature)
@@ -137,7 +142,7 @@ def train(train_datasets, validation_datasets, dataset_name, dataset_details, mo
     model = model.to(args.device)
 
     # optimizer / loss
-    optimizer, scheduler, scaler = load_optimizer(args, model_name, model)
+    optimizer, scheduler, scaler = load_optimizer(args, model)
     criterion = get_loss(args, model_name)
 
     args.global_step = 0

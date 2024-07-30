@@ -7,32 +7,12 @@ from simclr.modules import NT_Xent
 from joint_embedding_learning.barlow_twins.barlow import BarlowLoss, LARS
 
 
-def load_optimizer(args, model_name, model):
-
-    if model_name == 'simclr':
+def load_optimizer(args, model):
+    if args.optimizer == "Adam":
+        optimizer = torch.optim.Adam(model.parameters(), lr=args.learning_rate)  # TODO: LARS
         scheduler = None
         scaler = None
-        if args.optimizer == "Adam":
-            optimizer = torch.optim.Adam(model.parameters(), lr=3e-4)  # TODO: LARS
-        elif args.optimizer == "LARS":
-            # optimized using LARS with linear learning rate scaling
-            # (i.e. LearningRate = 0.3 × BatchSize/256) and weight decay of 10−6.
-            learning_rate = 0.3 * args.batch_size / 256
-            optimizer = LARS_simclr(
-                model.parameters(),
-                lr=learning_rate,
-                weight_decay=args.weight_decay,
-                exclude_from_weight_decay=["batch_normalization", "bias"],
-            )
-
-            # "decay the learning rate with the cosine decay schedule without restarts"
-            scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-                optimizer, args.epochs, eta_min=0, last_epoch=-1
-            )
-        else:
-            raise NotImplementedError
-    
-    elif model_name == 'barlow_twins':
+    elif args.optimizer == "LARS":
         scheduler = None
         param_weights = []
         param_biases = []
@@ -47,9 +27,8 @@ def load_optimizer(args, model_name, model):
                         lars_adaptation_filter=True)
         
         scaler = torch.cuda.amp.GradScaler()
-        
     else:
-        raise ValueError(f"Model {model_name} not found")
+        raise NotImplementedError
     
     return optimizer, scheduler, scaler
 
