@@ -13,7 +13,7 @@ data:
   use_gaussian_blur: false
   use_horizontal_flip: false
 logging:
-  folder: /home/samanta/CMTJE/joint_embedding_learning/ijepa_paper_implementation/ijepa/logs/
+  folder: /home/samanta/CMTJE/joint_embedding_learning/ijepa/logs/
   write_tag: jepa
 mask:
   allow_overlap: false

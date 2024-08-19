@@ -5,6 +5,8 @@ dataset_0:
   gelslim_transforms:
 
   image_size: 224
+  padding: False
+  difference: True
   
   bubbles_stats:
     mean: [0.0048]
@@ -51,6 +53,8 @@ dataset_1:
     - 'normalize'
 
   image_size: 224
+  padding: False
+  difference: True
 
   bubbles_stats:
     mean: [0.0048]
@@ -91,11 +95,35 @@ dataset_2:
   dataset_type: 'stl_10'
   image_size: 224
   train_percent: 1.0
+  n_classes_training: 10
+  class_names:
+    - 'airplane'
+    - 'bird'
+    - 'car'
+    - 'cat'
+    - 'deer'
+    - 'dog'
+    - 'horse'
+    - 'monkey'
+    - 'ship'
+    - 'truck'
 
 dataset_3:
   dataset_type: 'stl_10'
   image_size: 224
   train_percent: 0.8
+  n_classes_training: 10
+  class_names:
+    - 'airplane'
+    - 'bird'
+    - 'car'
+    - 'cat'
+    - 'deer'
+    - 'dog'
+    - 'horse'
+    - 'monkey'
+    - 'ship'
+    - 'truck'
 
 dataset_4:
   dataset_type: 'tactile'
@@ -111,6 +139,8 @@ dataset_4:
     - 'in_range'
 
   image_size: 224
+  padding: False
+  difference: True
 
   bubbles_stats:
     mean: [0.0048]
@@ -128,6 +158,8 @@ dataset_4:
   gelslim_path: '/home/samanta/tactile_style_transfer/new_processed_data/gelslims/data'
   num_distinct_angles: 21
   num_angles_skip: 3
+  n_classes_training: 9
+  n_classes_test: 3
   
   tools:
     training_tools:
@@ -158,6 +190,8 @@ dataset_5:
     - 'normalize'
 
   image_size: 224
+  padding: False
+  difference: True
 
   bubbles_stats:
     mean: [0.0027]
@@ -196,3 +230,103 @@ dataset_5:
       - 'pattern_05_3_lines_angle_2'
       - 'pattern_10_curves_degree_150_radios_10'
       - 'pattern_13_curves_degree_120_radios_20'
+
+dataset_6:
+  dataset_type: 'tactile'
+
+  bubbles_transforms:
+    - 'resize'
+    - 'normalize'
+
+  gelslim_transforms:
+    - 'resize'
+    - 'normalize'
+
+  image_size: 224
+  padding: True
+  difference: True
+
+  bubbles_stats:
+    mean: [0.0048]
+    std: [0.0047]
+    min: [-0.0188]
+    max: [0.0264]
+
+  gelslim_stats:
+    mean: [-0.0107, -0.0063, -0.0087]
+    std: [0.0687, 0.0428, 0.0576]
+    min: [-0.6471,-0.5098,-0.7333]
+    max: [0.7725,0.7333,0.6941]
+
+  bubbles_path: '/home/samanta/tactile_style_transfer/new_processed_data/bubbles/data'
+  gelslim_path: '/home/samanta/tactile_style_transfer/new_processed_data/gelslims/data'
+  num_distinct_angles: 21
+  num_angles_skip: 3
+  n_classes_training: 9
+  n_classes_test: 3
+  tools:
+    training_tools:
+      - 'pattern_01_2_lines_angle_1'
+      - 'pattern_02_2_lines_angle_2'
+      - 'pattern_03_2_lines_angle_3'
+      - 'pattern_04_3_lines_angle_1'
+      - 'pattern_06_5_lines_angle_1'
+      - 'pattern_31_rod'
+      - 'pattern_32'
+      - 'pattern_33'
+      - 'pattern_37'
+
+    test_tools:
+      - 'pattern_05_3_lines_angle_2'
+      - 'pattern_35'
+      - 'pattern_36'
+
+dataset_7:
+  dataset_type: 'tactile'
+
+  bubbles_transforms:
+    - 'resize'
+    - 'normalize'
+
+  gelslim_transforms:
+    - 'resize'
+    - 'normalize'
+
+  image_size: 224
+  padding: False
+  difference: False
+
+  bubbles_stats:
+    mean: [0.0048]
+    std: [0.0047]
+    min: [-0.0188]
+    max: [0.0264]
+
+  gelslim_stats:
+    mean: [0.2966, 0.3886, 0.5625]
+    std: [0.1325, 0.0748, 0.1424]
+    min: [0, 0, 0]
+    max: [0.8962,0.8857,0.9845]
+
+  bubbles_path: '/home/samanta/tactile_style_transfer/new_processed_data/bubbles/data'
+  gelslim_path: '/home/samanta/tactile_style_transfer/new_processed_data/gelslims/data'
+  num_distinct_angles: 21
+  num_angles_skip: 3
+  n_classes_training: 9
+  n_classes_test: 3
+  tools:
+    training_tools:
+      - 'pattern_01_2_lines_angle_1'
+      - 'pattern_02_2_lines_angle_2'
+      - 'pattern_03_2_lines_angle_3'
+      - 'pattern_04_3_lines_angle_1'
+      - 'pattern_06_5_lines_angle_1'
+      - 'pattern_31_rod'
+      - 'pattern_32'
+      - 'pattern_33'
+      - 'pattern_37'
+
+    test_tools:
+      - 'pattern_05_3_lines_angle_2'
+      - 'pattern_35'
+      - 'pattern_36'

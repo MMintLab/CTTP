@@ -8,33 +8,80 @@ import yaml
 def sort_order(filename):  #TODO: move this to utils
     return int(re.findall(r'\d+', filename)[-1])
 
-def get_images_from_full_data(bubbles_data, gelslim_data, bubbles_transform = None, gelslim_transform = None, side = 'both'):
+def spatially_aligned_images(bubbles_img, gelslim_img):
+    bubbles_size = bubbles_img.shape
+    gelslim_size = gelslim_img.shape
+    bubbles_resize = transforms.Resize((600,750))
+    gelslim_resize = transforms.Resize((135,180))
+    bubbles_resized = bubbles_resize(bubbles_img)
+    gelslim_resized = gelslim_resize(gelslim_img)
+    us_r = 78
+    vs_r = 67
+    us_l = 71
+    vs_l = 68
+    #center location on resized bubbles
+    vs_r_resized = round(vs_r*(30/7))
+    us_r_resized = round(us_r*(30/7))
+    vs_l_resized = round(vs_l*(30/7))
+    us_l_resized = round(us_l*(30/7))
+    #center location on resized gelslim
+    g_center_vs = 67
+    g_center_us = 90
+    #offset to fit alignment to most samples
+    offset_v_r = 0
+    offset_u_r = -20
+    offset_v_l = +10
+    offset_u_l = -36
+    #get padded image
+    gelslim_padded = torch.zeros((2,3,600,750), device=bubbles_img.device)
+    top_r = vs_r_resized - g_center_vs + offset_v_r
+    bottom_r = vs_r_resized + g_center_vs + offset_v_r
+    left_r = us_r_resized - g_center_us + offset_u_r
+    right_r = us_r_resized + g_center_us + offset_u_r
+    top_l = vs_l_resized - g_center_vs + offset_v_l
+    bottom_l = vs_l_resized + g_center_vs + offset_v_l
+    left_l = us_l_resized - g_center_us + offset_u_l
+    right_l = us_l_resized + g_center_us + offset_u_l
+    gelslim_padded[0,:,top_r:bottom_r+1, left_r:right_r] = gelslim_resized[0]
+    gelslim_padded[1,:,top_l:bottom_l+1, left_l:right_l] = gelslim_resized[1]
+    # resize images back
+    bubbles_resized = transforms.Resize(bubbles_size[-2:])(bubbles_resized)
+    gelslim_padded = transforms.Resize(gelslim_size[-2:])(gelslim_padded)
+    return bubbles_resized, gelslim_padded
+
+def get_images_from_full_data(bubbles_data, gelslim_data, bubbles_transform = None, gelslim_transform = None, side = 'both', padding = False, difference = True):
     rotate = transforms.RandomRotation((180,180))
     bubbles_img = bubbles_data['bubble_imprint']
 
     gelslim_img = gelslim_data['gelslim']
     gelslim_ref = gelslim_data['gelslim_ref']
     gelslim_diff = gelslim_img - gelslim_ref
-    gelslim_diff = rotate(gelslim_diff / 255)
+
+    if difference:
+        gelslim_out = rotate(gelslim_diff / 255)
+    else:
+        gelslim_out = rotate(gelslim_img / 255)
 
     bubbles_angle = bubbles_data['theta']
     gelslim_angle = gelslim_data['theta']
     
-    # import pdb; pdb.set_trace()
     if bubbles_transform:
         bubbles_img = bubbles_transform(bubbles_img)
 
     if gelslim_transform:
-        gelslim_diff = gelslim_transform(gelslim_diff)
+        gelslim_out = gelslim_transform(gelslim_out)
+
+    if padding:
+        bubbles_img, gelslim_out = spatially_aligned_images(bubbles_img, gelslim_out)
 
     if side == 'right':
         bubbles_img = bubbles_img[0]
-        gelslim_diff = gelslim_diff[0]
+        gelslim_out = gelslim_out[0]
     elif side == 'left':
         bubbles_img = bubbles_img[1]
-        gelslim_diff = gelslim_diff[1]
+        gelslim_out = gelslim_out[1]
     
-    return bubbles_img, gelslim_diff, bubbles_angle, gelslim_angle
+    return bubbles_img, gelslim_out, bubbles_angle, gelslim_angle
 
 def get_datasets_stats(datasets, batch_size = 64):
     bubbles_img_totat_psum = 0

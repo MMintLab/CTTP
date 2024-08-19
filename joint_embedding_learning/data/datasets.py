@@ -8,7 +8,7 @@ import os
 import yaml
 
 class CMTJESimCLR(Dataset):
-    def __init__(self, root_dir_bubbles, root_dir_gelslim, selected_tools, bubbles_transforms=None, gelslim_transform=None, angle_start = 0, angle_skip = 1, side = 'both', device = 'cpu'):
+    def __init__(self, root_dir_bubbles, root_dir_gelslim, selected_tools, bubbles_transforms=None, gelslim_transform=None, angle_start = 0, angle_skip = 1, side = 'both', device = 'cpu', padding = False, difference = True):
         self.side = side
         self.bubbles_files = []
         self.gelslim_files = []
@@ -29,6 +29,8 @@ class CMTJESimCLR(Dataset):
         self.bubblest_transforms = bubbles_transforms
         self.gelslim_transform = gelslim_transform
         self.device = device
+        self.padding = padding
+        self.difference = difference
 
     def __len__(self):        
         return len(self.bubbles_files)
@@ -37,9 +39,11 @@ class CMTJESimCLR(Dataset):
         bubbles_data = torch.load(self.bubbles_files[idx], map_location=self.device)
         gelslim_data = torch.load(self.gelslim_files[idx], map_location=self.device)
 
-        bubbles_img, gelslim_diff, _, _ = get_images_from_full_data(bubbles_data, gelslim_data, bubbles_transform = self.bubblest_transforms, gelslim_transform = self.gelslim_transform, side = self.side)
+        # import pdb; pdb.set_trace()
+
+        bubbles_img, gelslim_diff, _, _ = get_images_from_full_data(bubbles_data, gelslim_data, bubbles_transform = self.bubblest_transforms, gelslim_transform = self.gelslim_transform, side = self.side, padding = self.padding, difference = self.difference)
         bubbles_img = bubbles_img.repeat(3, 1, 1)
-        return [bubbles_img, gelslim_diff], self.tool_per_sample[idx]
+        return [bubbles_img, gelslim_diff], [torch.tensor(self.tool_per_sample[idx]).to(self.device), gelslim_data['theta'].to(self.device)*(180/torch.pi), gelslim_data['x'].to(self.device), gelslim_data['y'].to(self.device)] 
     
 def get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', device = 'cpu'):
     root_dir_bubbles = dataset_details['bubbles_path']
@@ -47,6 +51,8 @@ def get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', de
     training_tools = dataset_details['tools']['training_tools']
     test_tools = dataset_details['tools']['test_tools']
     angle_skip = dataset_details['num_angles_skip']
+    padding = dataset_details['padding']
+    difference = dataset_details['difference']
     bubbles_transforms, gelslim_transform = get_transformations(dataset_name, device=device)
     
     datasets_right_train = []
@@ -61,8 +67,8 @@ def get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', de
     datasets_left_unseen_tools_test = []
 
     for i in range(angle_skip):
-        dataset_right = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, training_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='right', device=device)
-        dataset_left = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, training_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='left', device=device)
+        dataset_right = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, training_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='right', device=device, padding=padding, difference=difference)
+        dataset_left = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, training_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='left', device=device, padding=padding, difference=difference)
         train_len = int(0.8 * len(dataset_right))
         unseen_len = len(dataset_right) - train_len
         dataset_right_train, dataset_right_unseen_grasps = random_split(dataset_right, [train_len, unseen_len], generator=torch.Generator().manual_seed(0))
@@ -80,8 +86,8 @@ def get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', de
         datasets_right_unseen_grasps_test += [dataset_right_unseen_grasps_test]
         datasets_left_unseen_grasps_test += [dataset_left_unseen_grasps_test]
 
-        dataset_right_unseen_tools = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, test_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='right', device=device)
-        dataset_left_unseen_tools = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, test_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='left', device=device)
+        dataset_right_unseen_tools = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, test_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='right', device=device, padding=padding, difference=difference)
+        dataset_left_unseen_tools = CMTJESimCLR(root_dir_bubbles, root_dir_gelslim, test_tools, bubbles_transforms=bubbles_transforms, gelslim_transform=gelslim_transform, angle_start = i, angle_skip=angle_skip, side='left', device=device, padding=padding, difference=difference)
         val_len = int(0.5 * len(dataset_right_unseen_tools))
         test_len = len(dataset_right_unseen_tools) - val_len
         dataset_right_unseen_tools_val, dataset_right_unseen_tools_test = random_split(dataset_right_unseen_tools, [val_len, test_len], generator=torch.Generator().manual_seed(0))
@@ -100,7 +106,7 @@ def get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', de
     if data_split == 'train':
         return datasets_train, datasets_unseen_grasps_val, datasets_unseen_tools_val
     else:
-        return datasets_train, datasets_unseen_grasps_val, datasets_unseen_grasps_test
+        return datasets_train, datasets_unseen_grasps_test, datasets_unseen_tools_test
     
 def get_stl_10_datasets(dataset_details, data_split = 'train'):
     path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'datasets')

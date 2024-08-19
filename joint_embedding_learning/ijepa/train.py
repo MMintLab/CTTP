@@ -27,7 +27,6 @@ import numpy as np
 import torch
 import torch.multiprocessing as mp
 import torch.nn.functional as F
-from torch.nn.parallel import DistributedDataParallel
 
 from joint_embedding_learning.ijepa.masks.multiblock import MaskCollator as MBMaskCollator
 from joint_embedding_learning.ijepa.masks.utils import apply_masks
@@ -41,7 +40,7 @@ from joint_embedding_learning.ijepa.utils.logging import (
     grad_logger,
     AverageMeter)
 from joint_embedding_learning.ijepa.utils.tensors import repeat_interleave_batch
-from joint_embedding_learning.ijepa.datasets.imagenet1k import make_imagenet1k, make_stl_10
+from joint_embedding_learning.ijepa.datasets.imagenet1k import make_imagenet1k, make_stl_10, make_tactile
 
 from joint_embedding_learning.ijepa.helper import (
     load_checkpoint,
@@ -65,7 +64,7 @@ logging.basicConfig(stream=sys.stdout, level=logging.INFO)
 logger = logging.getLogger()
 
 
-def main(args, resume_preempt=False):
+def main(args, resume_preempt=False, device='cuda:0'):
 
     # ----------------------------------------------------------------------- #
     #  PASSED IN PARAMS FROM CONFIG FILE
@@ -79,11 +78,8 @@ def main(args, resume_preempt=False):
     copy_data = args['meta']['copy_data']
     pred_depth = args['meta']['pred_depth']
     pred_emb_dim = args['meta']['pred_emb_dim']
-    if not torch.cuda.is_available():
-        device = torch.device('cpu')
-    else:
-        device = torch.device('cuda:0')
-        torch.cuda.set_device(device)
+    torch.cuda.set_device(device)
+    print('Device: ', device)
 
     # -- DATA
     use_gaussian_blur = args['data']['use_gaussian_blur']
@@ -190,7 +186,7 @@ def main(args, resume_preempt=False):
         color_jitter=color_jitter)
 
     # -- init data-loaders/samplers
-    _, unsupervised_loader, unsupervised_sampler = make_imagenet1k(
+    _, unsupervised_loader = make_tactile(
             transform=transform,
             batch_size=batch_size,
             collator=mask_collator,
@@ -202,21 +198,8 @@ def main(args, resume_preempt=False):
             root_path=root_path,
             image_folder=image_folder,
             copy_data=copy_data,
-            drop_last=True)
-    
-    _, unsupervised_loader, unsupervised_sampler = make_stl_10(
-            transform=transform,
-            batch_size=batch_size,
-            collator=mask_collator,
-            pin_mem=pin_mem,
-            training=True,
-            num_workers=num_workers,
-            world_size=world_size,
-            rank=rank,
-            root_path=root_path,
-            image_folder=image_folder,
-            copy_data=copy_data,
-            drop_last=True)
+            drop_last=True,
+            )
     
     ipe = len(unsupervised_loader)
 
@@ -234,9 +217,7 @@ def main(args, resume_preempt=False):
         num_epochs=num_epochs,
         ipe_scale=ipe_scale,
         use_bfloat16=use_bfloat16)
-    encoder = DistributedDataParallel(encoder, static_graph=True)
-    predictor = DistributedDataParallel(predictor, static_graph=True)
-    target_encoder = DistributedDataParallel(target_encoder)
+
     for p in target_encoder.parameters():
         p.requires_grad = False
 
@@ -284,7 +265,7 @@ def main(args, resume_preempt=False):
         logger.info('Epoch %d' % (epoch + 1))
 
         # -- update distributed-data-loader epoch
-        unsupervised_sampler.set_epoch(epoch)
+        # unsupervised_sampler.set_epoch(epoch)
 
         loss_meter = AverageMeter()
         maskA_meter = AverageMeter()
@@ -297,10 +278,11 @@ def main(args, resume_preempt=False):
             def load_imgs():
                 # -- unsupervised imgs
                 imgs = udata[0].to(device, non_blocking=True)
-                masks_1 = [u.to(device, non_blocking=True) for u in masks_enc]
-                masks_2 = [u.to(device, non_blocking=True) for u in masks_pred]
-                return (imgs, masks_1, masks_2)
-            imgs, masks_enc, masks_pred = load_imgs()
+                labels = udata[1].to(device, non_blocking=True)
+                masks_1 = [u.to(device) for u in masks_enc]
+                masks_2 = [u.to(device) for u in masks_pred]
+                return (imgs, labels, masks_1, masks_2)
+            imgs, labels, masks_enc, masks_pred = load_imgs()
             # print(masks_enc[0].shape)
             # print(masks_pred[0].shape)
             maskA_meter.update(len(masks_enc[0][0]))
@@ -313,7 +295,7 @@ def main(args, resume_preempt=False):
 
                 def forward_target():
                     with torch.no_grad():
-                        h = target_encoder(imgs)
+                        h = target_encoder(labels)
                         h = F.layer_norm(h, (h.size(-1),))  # normalize over feature-dim
                         B = len(h)
                         # -- create targets (masked regions of h)
@@ -334,8 +316,10 @@ def main(args, resume_preempt=False):
                 # Step 1. Forward
                 with torch.cuda.amp.autocast(dtype=torch.bfloat16, enabled=use_bfloat16):
                     h = forward_target()
-                    z = forward_context()
+                    z = forward_context()   
                     loss = loss_fn(z, h)
+
+                # import pdb; pdb.set_trace()
 
                 #  Step 2. Backward & step
                 if use_bfloat16:

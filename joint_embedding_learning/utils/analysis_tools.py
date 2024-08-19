@@ -36,7 +36,7 @@ def apply_tsne_3d(embeddings, n_components=3, perplexity=30.0, learning_rate=200
     tsne = TSNE(n_components=n_components, perplexity=perplexity, learning_rate=learning_rate)
     return tsne.fit_transform(embeddings)
 
-def plot_tsne(tsne_embeddings, labels, colors, sensor='bubbles', sensor_vis = False):
+def plot_tsne_tactile(tsne_embeddings, labels, colors, sensor='bubbles', sensor_vis = False):
     if sensor == 'bubbles':
         marker_style = 'o'
         alpha = 0.2
@@ -59,4 +59,15 @@ def plot_tsne(tsne_embeddings, labels, colors, sensor='bubbles', sensor_vis = Fa
         plt.scatter(tsne_embeddings[indices, 0], tsne_embeddings[indices, 1], label=label, alpha=alpha, marker=marker_style, color=colors[label], s=30)
  
     # plt.show()
+    return
+
+def plot_tsne(tsne_embeddings, labels, alpha=1.0, marker_style='o'):
+    unique_labels = np.unique(labels)
+    # colors = plt.cm.tab10(np.linspace(0, 1, len(unique_labels)))
+    colors = plt.get_cmap('tab20')(np.linspace(0, 1, len(unique_labels)))
+    label_to_color = dict(zip(unique_labels, colors))
+
+    for label in np.unique(labels):
+        indices = labels == label
+        plt.scatter(tsne_embeddings[indices, 0], tsne_embeddings[indices, 1], label=label, alpha=alpha, marker=marker_style, color=label_to_color[label], s=30)
     return

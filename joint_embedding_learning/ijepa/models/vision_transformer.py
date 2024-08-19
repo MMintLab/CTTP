@@ -320,6 +320,7 @@ class VisionTransformerPredictor(nn.Module):
         x = self.predictor_norm(x)
 
         # -- return preds for mask tokens
+        # import pdb; pdb.set_trace()
         x = x[:, N_ctxt:]
         x = self.predictor_proj(x)
 

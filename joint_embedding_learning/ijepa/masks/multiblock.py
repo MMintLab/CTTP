@@ -12,6 +12,7 @@ from multiprocessing import Value
 from logging import getLogger
 
 import torch
+import torch.utils
 import torchvision.utils as vutils
 
 _GLOBAL_SEED = 0
@@ -121,14 +122,18 @@ class MaskCollator(object):
         '''
         B = len(batch)
 
-        collated_batch = torch.utils.data.default_collate(batch)
+        collated_batch_all = torch.utils.data.default_collate(batch)
+        collated_batch = torch.utils.data.default_collate(collated_batch_all[0])
 
-        # print('Collated batch image size:', collated_batch[0].size())
-        # print('Collated batch label size:', collated_batch[1])
+        # print('Collated batch size:', len(collated_batch[0]))
+        # print('Collated batch image size:', collated_batch[0].dtype)
+        # print('Collated batch label size:', collated_batch[1].dtype)
 
         # Create a grid of images from the collated batch
         # grid = vutils.make_grid(collated_batch[0], nrow=int(math.sqrt(len(collated_batch[0]))))
-        # vutils.save_image(grid, '/home/samanta/CMTJE/joint_embedding_learning/ijepa_paper_implementation/ijepa/logs/grid.jpg')
+        # vutils.save_image(grid, '/home/samanta/CMTJE/joint_embedding_learning/ijepa_paper_implementation/ijepa/logs/grid_img.jpg')
+        # grid = vutils.make_grid(collated_batch[1], nrow=int(math.sqrt(len(collated_batch[0]))))
+        # vutils.save_image(grid, '/home/samanta/CMTJE/joint_embedding_learning/ijepa_paper_implementation/ijepa/logs/grid_labels.jpg')
         # print('Saved grid of size:', grid.size())
 
         seed = self.step()

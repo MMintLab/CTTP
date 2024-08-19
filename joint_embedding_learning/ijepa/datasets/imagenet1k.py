@@ -15,6 +15,10 @@ from logging import getLogger
 
 import torch
 import torchvision
+from torch.utils.data import ConcatDataset
+
+import yaml
+from joint_embedding_learning.data.datasets import get_tactile_datasets
 
 _GLOBAL_SEED = 0
 logger = getLogger()
@@ -96,6 +100,47 @@ def make_stl_10(
     logger.info('ImageNet unsupervised data loader created')
 
     return dataset, data_loader, dist_sampler
+
+def make_tactile(
+    transform,
+    batch_size,
+    collator=None,
+    pin_mem=True,
+    num_workers=8,
+    world_size=1,
+    rank=0,
+    root_path='/home/samanta/CMTJE/datasets',
+    image_folder=None,
+    training=True,
+    copy_data=False,
+    drop_last=True,
+    subset_file=None,
+):
+    dataset_name = 'dataset_6'
+    dataset_config =  os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))), 'config', 'datasets_config.yaml')
+    with open(dataset_config, 'r') as file:
+        config = yaml.safe_load(file)
+    dataset_details = config[dataset_name]
+
+    datasets, _, _ = get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', device = 'cpu')
+    dataset = ConcatDataset(datasets)
+
+    # dist_sampler = torch.utils.data.distributed.DistributedSampler(
+    #     dataset=dataset,
+    #     num_replicas=world_size,
+    #     rank=rank)
+    data_loader = torch.utils.data.DataLoader(
+        dataset,
+        collate_fn=collator,
+        # sampler=dist_sampler,
+        batch_size=batch_size,
+        drop_last=drop_last,
+        pin_memory=pin_mem,
+        num_workers=num_workers,
+        persistent_workers=False)
+    logger.info('Tactile unsupervised data loader created')
+
+    return dataset, data_loader
 
 
 class ImageNet(torchvision.datasets.ImageFolder):
