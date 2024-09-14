@@ -6,6 +6,7 @@ import torch
 import glob as glob
 import os
 import yaml
+import csv
 
 class CMTJESimCLR(Dataset):
     def __init__(self, root_dir_bubbles, root_dir_gelslim, selected_tools, bubbles_transforms=None, gelslim_transform=None, angle_start = 0, angle_skip = 1, side = 'both', device = 'cpu', padding = False, difference = True):
@@ -36,14 +37,31 @@ class CMTJESimCLR(Dataset):
         return len(self.bubbles_files)
 
     def __getitem__(self, idx):
+        # csv_file = '/home/samanta/tactile_style_transfer/new_processed_data/training_data_info.csv'
+        # # Check if the CSV file already has content
+        # file_exists = os.path.isfile(csv_file) and os.path.getsize(csv_file) > 0
+
         bubbles_data = torch.load(self.bubbles_files[idx], map_location=self.device)
         gelslim_data = torch.load(self.gelslim_files[idx], map_location=self.device)
+        # print('Index on dataset:', idx)
 
-        # import pdb; pdb.set_trace()
+        # with open(csv_file, 'a', newline='') as file:
+        #     writer = csv.writer(file)
+
+        #     if not file_exists:
+        #         writer.writerow(['Tool_name', 'Data_idx', 'x', 'y', 'theta'])
+
+        #     tool_name = os.path.basename(os.path.dirname(self.gelslim_files[idx])).split('gelslim_style_transfer_dataset_gelslim_')[-1]
+        #     data_idx = os.path.basename(self.gelslim_files[idx]).split('_')[-1].split('.pt')[0]
+        #     x = gelslim_data['x']
+        #     y = gelslim_data['y']
+        #     theta = gelslim_data['theta']
+        #     writer.writerow([tool_name, data_idx, x.item(), y.item(), theta.item()])
 
         bubbles_img, gelslim_diff, _, _ = get_images_from_full_data(bubbles_data, gelslim_data, bubbles_transform = self.bubblest_transforms, gelslim_transform = self.gelslim_transform, side = self.side, padding = self.padding, difference = self.difference)
         bubbles_img = bubbles_img.repeat(3, 1, 1)
-        return [bubbles_img, gelslim_diff], [torch.tensor(self.tool_per_sample[idx]).to(self.device), gelslim_data['theta'].to(self.device)*(180/torch.pi), gelslim_data['x'].to(self.device), gelslim_data['y'].to(self.device)] 
+        # import pdb; pdb.set_trace()
+        return [bubbles_img, gelslim_diff], [torch.tensor(self.tool_per_sample[idx]).to(self.device), gelslim_data['theta'].to(self.device), gelslim_data['x'].to(self.device), gelslim_data['y'].to(self.device)] 
     
 def get_tactile_datasets(dataset_name, dataset_details, data_split = 'train', device = 'cpu'):
     root_dir_bubbles = dataset_details['bubbles_path']

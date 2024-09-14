@@ -52,7 +52,7 @@ def inference_stl_10(loader, contrastive_model, device):
     print("Features shape {}".format(feature_vector.shape))
     return feature_vector, labels_vector
 
-def inference_tactile(loader, contrastive_model, device):
+def inference_tactile(loader, contrastive_model, model_name, device):
     feature_vector = []
     labels_vector = []
     thetas_vector = []
@@ -65,7 +65,11 @@ def inference_tactile(loader, contrastive_model, device):
         # get encoding
         # import pdb; pdb.set_trace()
         with torch.no_grad():
-            h, _, z, _ = contrastive_model(x, x)
+            if model_name == 'T3':
+                contrastive_model.set_domains('bubbles', 'mae_recon_single', 'single_tower_embedding')
+                h, _, _ = contrastive_model(x)
+            else:
+                h, _, z, _ = contrastive_model(x, x)
 
         h = h.detach()
 
@@ -83,7 +87,7 @@ def inference_tactile(loader, contrastive_model, device):
     print("Features shape {}".format(feature_vector.shape))
     return feature_vector, (labels_vector, thetas_vector, x_vector, y_vector)
 
-def inference_tactile_inv(loader, contrastive_model, device):
+def inference_tactile_inv(loader, contrastive_model, model_name, device):
     feature_vector = []
     labels_vector = []
     thetas_vector = []
@@ -95,7 +99,11 @@ def inference_tactile_inv(loader, contrastive_model, device):
 
         # get encoding
         with torch.no_grad():
-            h, _, z, _ = contrastive_model(x, x)
+            if model_name == 'T3':
+                contrastive_model.set_domains('gelslims', 'mae_recon_single', 'single_tower_embedding')
+                h, _, _ = contrastive_model(x)
+            else:
+                h, _, z, _ = contrastive_model(x, x)
 
         h = h.detach()
 
@@ -169,15 +177,15 @@ def get_features_stl_10(contrastive_model, train_loader, test_loader, dataset_ty
     
     return train_X, train_y, test_X, test_y
 
-def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, unseen_tools_loader, dataset_type, device, save_path):
+def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, unseen_tools_loader, dataset_type, model_name, device, save_path):
     train_X_bubbles_save_path = os.path.join(save_path, 'train_X_bubbles.pt')
     train_y_bubbles_save_path = os.path.join(save_path, 'train_y_bubbles.pt')
     train_X_gelslim_save_path = os.path.join(save_path, 'train_X_gelslim.pt')
     train_y_gelslim_save_path = os.path.join(save_path, 'train_y_gelslim.pt')
-    unseen_graps_X_bubbles_save_path = os.path.join(save_path, 'unseen_graps_X_bubbles.pt')
-    unseen_graps_y_bubbles_save_path = os.path.join(save_path, 'unseen_graps_y_bubbles.pt')
-    unseen_graps_X_gelslim_save_path = os.path.join(save_path, 'unseen_graps_X_gelslim.pt')
-    unseen_graps_y_gelslim_save_path = os.path.join(save_path, 'unseen_graps_y_gelslim.pt')
+    unseen_graps_X_bubbles_save_path = os.path.join(save_path, 'unseen_grasps_X_bubbles.pt')
+    unseen_graps_y_bubbles_save_path = os.path.join(save_path, 'unseen_grasps_y_bubbles.pt')
+    unseen_graps_X_gelslim_save_path = os.path.join(save_path, 'unseen_grasps_X_gelslim.pt')
+    unseen_graps_y_gelslim_save_path = os.path.join(save_path, 'unseen_grasps_y_gelslim.pt')
     unseen_tools_X_bubbles_save_path = os.path.join(save_path, 'unseen_tools_X_bubbles.pt')
     unseen_tools_y_bubbles_save_path = os.path.join(save_path, 'unseen_tools_y_bubbles.pt')
     unseen_tools_X_gelslim_save_path = os.path.join(save_path, 'unseen_tools_X_gelslim.pt')
@@ -187,7 +195,7 @@ def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, u
         train_X_bubbles = torch.load(train_X_bubbles_save_path)
         train_y_bubbles = torch.load(train_y_bubbles_save_path)
     else:
-        train_X_bubbles, train_y_bubbles = inference_tactile(train_loader, contrastive_model, device)
+        train_X_bubbles, train_y_bubbles = inference_tactile(train_loader, contrastive_model, model_name, device)
         torch.save(train_X_bubbles, train_X_bubbles_save_path)
         torch.save(train_y_bubbles, train_y_bubbles_save_path)
     
@@ -195,7 +203,7 @@ def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, u
         train_X_gelslim = torch.load(train_X_gelslim_save_path)
         train_y_gelslim = torch.load(train_y_gelslim_save_path)
     else:
-        train_X_gelslim, train_y_gelslim = inference_tactile_inv(train_loader, contrastive_model, device)
+        train_X_gelslim, train_y_gelslim = inference_tactile_inv(train_loader, contrastive_model, model_name, device)
         torch.save(train_X_gelslim, train_X_gelslim_save_path)
         torch.save(train_y_gelslim, train_y_gelslim_save_path)
     
@@ -203,7 +211,7 @@ def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, u
         unseen_graps_X_bubbles = torch.load(unseen_graps_X_bubbles_save_path)
         unseen_graps_y_bubbles = torch.load(unseen_graps_y_bubbles_save_path)
     else:
-        unseen_graps_X_bubbles, unseen_graps_y_bubbles = inference_tactile(unseen_graps_loader, contrastive_model, device)
+        unseen_graps_X_bubbles, unseen_graps_y_bubbles = inference_tactile(unseen_graps_loader, contrastive_model, model_name, device)
         torch.save(unseen_graps_X_bubbles, unseen_graps_X_bubbles_save_path)
         torch.save(unseen_graps_y_bubbles, unseen_graps_y_bubbles_save_path)
     
@@ -211,7 +219,7 @@ def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, u
         unseen_graps_X_gelslim = torch.load(unseen_graps_X_gelslim_save_path)
         unseen_graps_y_gelslim = torch.load(unseen_graps_y_gelslim_save_path)
     else:
-        unseen_graps_X_gelslim, unseen_graps_y_gelslim = inference_tactile_inv(unseen_graps_loader, contrastive_model, device)
+        unseen_graps_X_gelslim, unseen_graps_y_gelslim = inference_tactile_inv(unseen_graps_loader, contrastive_model, model_name, device)
         torch.save(unseen_graps_X_gelslim, unseen_graps_X_gelslim_save_path)
         torch.save(unseen_graps_y_gelslim, unseen_graps_y_gelslim_save_path)
 
@@ -219,7 +227,7 @@ def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, u
         unseen_tools_X_bubbles = torch.load(unseen_tools_X_bubbles_save_path)
         unseen_tools_y_bubbles = torch.load(unseen_tools_y_bubbles_save_path)
     else:
-        unseen_tools_X_bubbles, unseen_tools_y_bubbles = inference_tactile(unseen_tools_loader, contrastive_model, device)
+        unseen_tools_X_bubbles, unseen_tools_y_bubbles = inference_tactile(unseen_tools_loader, contrastive_model, model_name, device)
         torch.save(unseen_tools_X_bubbles, unseen_tools_X_bubbles_save_path)
         torch.save(unseen_tools_y_bubbles, unseen_tools_y_bubbles_save_path)
     
@@ -227,7 +235,7 @@ def get_features_tactile(contrastive_model, train_loader, unseen_graps_loader, u
         unseen_tools_X_gelslim = torch.load(unseen_tools_X_gelslim_save_path)
         unseen_tools_y_gelslim = torch.load(unseen_tools_y_gelslim_save_path)
     else:
-        unseen_tools_X_gelslim, unseen_tools_y_gelslim = inference_tactile_inv(unseen_tools_loader, contrastive_model, device)
+        unseen_tools_X_gelslim, unseen_tools_y_gelslim = inference_tactile_inv(unseen_tools_loader, contrastive_model, model_name, device)
         torch.save(unseen_tools_X_gelslim, unseen_tools_X_gelslim_save_path)
         torch.save(unseen_tools_y_gelslim, unseen_tools_y_gelslim_save_path)
         
@@ -428,7 +436,7 @@ def logistic_regression_tactile(logistic_batch_size, logistic_epochs, contrastiv
     test_X_bubbles, test_y_bubbles, test_X_gelslim, test_y_gelslim = test_features
     arr_train_bubbles_loader, arr_test_bubbles_loader = create_data_loaders_from_arrays(train_X_bubbles, train_y_bubbles, test_X_bubbles, test_y_bubbles, logistic_batch_size)
     arr_train_gelslim_loader, arr_test_gelslim_loader = create_data_loaders_from_arrays(train_X_gelslim, train_y_gelslim, test_X_gelslim, test_y_gelslim, logistic_batch_size)
-
+    
     for epoch in range(logistic_epochs):
         loss_epoch, accuracy_epoch = train(
             args, arr_train_bubbles_loader, model, criterion, optimizer
@@ -671,10 +679,9 @@ def classification_task_stl_10(train_X, train_y, test_X, test_y, n_classes, logi
 
 def classification_task_tactile(classification_name, n_classes,logistic_batch_size, logistic_epochs, model_name, run_name, train_features, test_features, dataset_type, dataset_details, device, logistic_regression_depth = '1L'):
     ## Logistic Regression
-    # n_classes = dataset_details['n_classes_training']
+    # encoder = get_resnet('resnet50', pretrained=False)
     # import pdb; pdb.set_trace()
-    encoder = get_resnet('resnet50', pretrained=False)
-    n_features = encoder.fc.in_features  # get dimensions of fc layer
+    n_features = train_features[0].shape[-1]  # get dimensions of fc layer TODO: change based on feature size
     if logistic_regression_depth == '3L':
         model = LogisticRegression3L(n_features, n_classes)
     else:
@@ -694,13 +701,13 @@ def classification_task_tactile(classification_name, n_classes,logistic_batch_si
     # import pdb; pdb.set_trace()
     arr_train_bubbles_loader, arr_test_bubbles_loader = create_data_loaders_from_arrays(train_X_bubbles, train_y_bubbles, test_X_bubbles, test_y_bubbles, logistic_batch_size)
     arr_train_gelslim_loader, arr_test_gelslim_loader = create_data_loaders_from_arrays(train_X_gelslim, train_y_gelslim, test_X_gelslim, test_y_gelslim, logistic_batch_size)
-
+    # import pdb; pdb.set_trace()
     for epoch in range(logistic_epochs):
         loss_epoch, accuracy_epoch = train(
             arr_train_bubbles_loader, model, criterion, optimizer, device
         )
         print(
-            f"Epoch [{epoch}/{logistic_epochs}]\t Loss: {loss_epoch / len(arr_train_bubbles_loader)}\t Accuracy: {accuracy_epoch / len(arr_train_bubbles_loader)}"
+            f"Epoch [{epoch}/{logistic_epochs}]\t Loss: {loss_epoch / arr_train_bubbles_loader.__len__()}\t Accuracy: {accuracy_epoch / arr_train_bubbles_loader.__len__()}"
         )
 
     # Save final losses and accuracies to a CSV file
@@ -710,20 +717,20 @@ def classification_task_tactile(classification_name, n_classes,logistic_batch_si
         writer.writerow(['Train Bubbles Loss', 'Train Bubbles Accuracy', 'Train Gelslim Loss', 'Train Gelslim Accuracy', 'Test Bubbles Loss', 'Test Bubbles Accuracy', 'Test Gelslim Loss', 'Test Gelslim Accuracy'])
 
         train_bubbles_loss_epoch, train_bubbles_accuracy_epoch = test(arr_train_bubbles_loader, model, criterion, device)
-        train_bubbles_loss = train_bubbles_loss_epoch / len(arr_train_bubbles_loader)
-        train_bubbles_accuracy = train_bubbles_accuracy_epoch / len(arr_train_bubbles_loader)
+        train_bubbles_loss = train_bubbles_loss_epoch / arr_train_bubbles_loader.__len__()
+        train_bubbles_accuracy = train_bubbles_accuracy_epoch / arr_train_bubbles_loader.__len__()
 
         train_gelslim_loss_epoch, train_gelslim_accuracy_epoch = test(arr_train_gelslim_loader, model, criterion, device)
-        train_gelslim_loss = train_gelslim_loss_epoch / len(arr_train_gelslim_loader)
-        train_gelslim_accuracy = train_gelslim_accuracy_epoch / len(arr_train_gelslim_loader)
+        train_gelslim_loss = train_gelslim_loss_epoch / arr_train_gelslim_loader.__len__()
+        train_gelslim_accuracy = train_gelslim_accuracy_epoch / arr_train_gelslim_loader.__len__()
 
         test_bubbles_loss_epoch, test_bubbles_accuracy_epoch = test(arr_test_bubbles_loader, model, criterion, device)
-        test_bubbles_loss = test_bubbles_loss_epoch / len(arr_test_bubbles_loader)
-        test_bubbles_accuracy = test_bubbles_accuracy_epoch / len(arr_test_bubbles_loader)
+        test_bubbles_loss = test_bubbles_loss_epoch / arr_test_bubbles_loader.__len__()
+        test_bubbles_accuracy = test_bubbles_accuracy_epoch / arr_test_bubbles_loader.__len__()
 
         test_gelslim_loss_epoch, test_gelslim_accuracy_epoch = test(arr_test_gelslim_loader, model, criterion, device)
-        test_gelslim_loss = test_gelslim_loss_epoch / len(arr_test_gelslim_loader)
-        test_gelslim_accuracy = test_gelslim_accuracy_epoch / len(arr_test_gelslim_loader)
+        test_gelslim_loss = test_gelslim_loss_epoch / arr_test_gelslim_loader.__len__()
+        test_gelslim_accuracy = test_gelslim_accuracy_epoch / arr_test_gelslim_loader.__len__()
 
         writer.writerow([train_bubbles_loss, train_bubbles_accuracy, train_gelslim_loss, train_gelslim_accuracy, test_bubbles_loss, test_bubbles_accuracy, test_gelslim_loss, test_gelslim_accuracy])
 
@@ -746,7 +753,7 @@ if __name__ == "__main__":
     parser.add_argument("--model_name", default="simclr", type=str)
     parser.add_argument("--run_name", default="run_proper_logging", type=str)
     parser.add_argument("--logistic_batch_size", default=256, type=int)
-    parser.add_argument("--logistic_epochs", default=500, type=int)
+    parser.add_argument("--logistic_epochs", default=20, type=int)
     parser.add_argument("--device", default="cuda:0", type=str)
 
     args = parser.parse_args()
@@ -762,6 +769,7 @@ if __name__ == "__main__":
 
     # Load pre-trained contrastive model from checkpoint
     contrastive_model = get_trained_model(args.model_name, model_details, dataset_type, args.run_name, args.device)
+    
     save_path = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'checkpoints', dataset_type, args.model_name, args.run_name)
     if not os.path.exists(save_path):
         os.makedirs(save_path)
@@ -805,7 +813,7 @@ if __name__ == "__main__":
 
         # Save embeddings and labels
         print("### Creating features from pre-trained context model ###")
-        train_X_bubbles, train_y_bubbles, unseen_graps_X_bubbles, unseen_graps_y_bubbles, unseen_tools_X_bubbles, unseen_tools_y_bubbles, train_X_gelslim, train_y_gelslim, unseen_graps_X_gelslim, unseen_graps_y_gelslim, unseen_tools_X_gelslim, unseen_tools_y_gelslim = get_features_tactile(contrastive_model, train_loader, unseen_grasps_loader, unseen_tools_loader, dataset_type, args.device, save_path = save_path)
+        train_X_bubbles, train_y_bubbles, unseen_graps_X_bubbles, unseen_graps_y_bubbles, unseen_tools_X_bubbles, unseen_tools_y_bubbles, train_X_gelslim, train_y_gelslim, unseen_graps_X_gelslim, unseen_graps_y_gelslim, unseen_tools_X_gelslim, unseen_tools_y_gelslim = get_features_tactile(contrastive_model, train_loader, unseen_grasps_loader, unseen_tools_loader, dataset_type, args.model_name, args.device, save_path = save_path)
         # import pdb; pdb.set_trace()
         train_sensor = np.concatenate((np.zeros(len(train_X_bubbles)), np.ones(len(train_X_gelslim))), axis=0)
         train_tool = np.concatenate((train_y_bubbles[0], train_y_gelslim[0]), axis=0)
@@ -826,16 +834,38 @@ if __name__ == "__main__":
         # Save TSNE embeddings
         tsne_train_X_bubbles, tsne_train_X_gelslim, tsne_unseen_grasps_X_bubbles, tsne_unseen_grasps_X_gelslim, tsne_unseen_tools_X_bubbles, tsne_unseen_tools_X_gelslim = get_features_TSNE_tactile(train_X_bubbles, train_X_gelslim, unseen_graps_X_bubbles, unseen_graps_X_gelslim, unseen_tools_X_bubbles, unseen_tools_X_gelslim, save_path)
 
-        # Plot TSNE embeddings
-        plot_TSNE_tactile(tsne_train_X_bubbles, tsne_train_X_gelslim, tsne_unseen_grasps_X_bubbles, tsne_unseen_grasps_X_gelslim, tsne_unseen_tools_X_bubbles, tsne_unseen_tools_X_gelslim, dataset_details, save_path)
+        # # Plot TSNE embeddings
+        # plot_TSNE_tactile(tsne_train_X_bubbles, tsne_train_X_gelslim, tsne_unseen_grasps_X_bubbles, tsne_unseen_grasps_X_gelslim, tsne_unseen_tools_X_bubbles, tsne_unseen_tools_X_gelslim, dataset_details, save_path)
 
         # Classification task on training tools
-        classification_name = 'training_tools_classification'
+        classification_name = 'training_bubbles_tools_classification'
         classification_task_tactile(classification_name, dataset_details['n_classes_training'], args.logistic_batch_size, args.logistic_epochs, args.model_name, args.run_name, (train_X_bubbles[:5000], train_y_bubbles[0][:5000], train_X_gelslim[:5000], train_y_gelslim[0][:5000]), (unseen_graps_X_bubbles, unseen_graps_y_bubbles[0], unseen_graps_X_gelslim, unseen_graps_y_gelslim[0]), dataset_type, dataset_details, args.device)
+        classification_name = 'training_gelslims_tools_classification'
+        classification_task_tactile(classification_name, dataset_details['n_classes_training'], args.logistic_batch_size, args.logistic_epochs, args.model_name, args.run_name, (train_X_gelslim[:5000], train_y_gelslim[0][:5000], train_X_bubbles[:5000], train_y_bubbles[0][:5000]), (unseen_graps_X_gelslim, unseen_graps_y_gelslim[0], unseen_graps_X_bubbles, unseen_graps_y_bubbles[0]), dataset_type, dataset_details, args.device)
 
         # Classification task on testing tools
-        classification_name = 'testing_tools_classification'
-        classification_task_tactile(classification_name, dataset_details['n_classes_test'], args.logistic_batch_size, args.logistic_epochs, args.model_name, args.run_name, (unseen_tools_X_bubbles, unseen_tools_y_bubbles[0], unseen_tools_X_gelslim, unseen_tools_y_gelslim[0]), (unseen_tools_X_bubbles, unseen_tools_y_bubbles[0], unseen_tools_X_gelslim, unseen_tools_y_gelslim[0]), dataset_type, dataset_details, args.device)
+        # import pdb; pdb.set_trace()
+        len = len(unseen_tools_X_bubbles)
+        train_len = int(len * 0.8)
+        val_len = int(len * 0.1)
+        test_len = int(len * 0.1)
+        unseen_tools_X_bubbles_train = unseen_tools_X_bubbles[:train_len]
+        unseen_tools_y_bubbles_train = (unseen_tools_y_bubbles[0][:train_len], unseen_tools_y_bubbles[1][:train_len], unseen_tools_y_bubbles[2][:train_len], unseen_tools_y_bubbles[3][:train_len])
+        unseen_tools_X_gelslim_train = unseen_tools_X_gelslim[:train_len]
+        unseen_tools_y_gelslim_train = (unseen_tools_y_gelslim[0][:train_len], unseen_tools_y_gelslim[1][:train_len], unseen_tools_y_gelslim[2][:train_len], unseen_tools_y_gelslim[3][:train_len])
+        unseen_tools_X_bubbles_val = unseen_tools_X_bubbles[train_len:train_len+val_len]
+        unseen_tools_y_bubbles_val = (unseen_tools_y_bubbles[0][train_len:train_len+val_len], unseen_tools_y_bubbles[1][train_len:train_len+val_len], unseen_tools_y_bubbles[2][train_len:train_len+val_len], unseen_tools_y_bubbles[3][train_len:train_len+val_len])
+        unseen_tools_X_gelslim_val = unseen_tools_X_gelslim[train_len:train_len+val_len]
+        unseen_tools_y_gelslim_val = (unseen_tools_y_gelslim[0][train_len:train_len+val_len], unseen_tools_y_gelslim[1][train_len:train_len+val_len], unseen_tools_y_gelslim[2][train_len:train_len+val_len], unseen_tools_y_gelslim[3][train_len:train_len+val_len])
+        unseen_tools_X_bubbles_test = unseen_tools_X_bubbles[train_len+val_len:]
+        unseen_tools_y_bubbles_test = (unseen_tools_y_bubbles[0][train_len+val_len:], unseen_tools_y_bubbles[1][train_len+val_len:], unseen_tools_y_bubbles[2][train_len+val_len:], unseen_tools_y_bubbles[3][train_len+val_len:])
+        unseen_tools_X_gelslim_test = unseen_tools_X_gelslim[train_len+val_len:]
+        unseen_tools_y_gelslim_test = (unseen_tools_y_gelslim[0][train_len+val_len:], unseen_tools_y_gelslim[1][train_len+val_len:], unseen_tools_y_gelslim[2][train_len+val_len:], unseen_tools_y_gelslim[3][train_len+val_len:])
+        # import pdb; pdb.set_trace()
+        classification_name = 'testing_bubbles_tools_classification'
+        classification_task_tactile(classification_name, dataset_details['n_classes_test'], args.logistic_batch_size, args.logistic_epochs, args.model_name, args.run_name, (unseen_tools_X_bubbles_train, unseen_tools_y_bubbles_train[0], unseen_tools_X_gelslim_train, unseen_tools_y_gelslim_train[0]), (unseen_tools_X_bubbles_test, unseen_tools_y_bubbles_test[0], unseen_tools_X_gelslim_test, unseen_tools_y_gelslim_test[0]), dataset_type, dataset_details, args.device)
+        classification_name = 'testing_gelslims_tools_classification'
+        classification_task_tactile(classification_name, dataset_details['n_classes_test'], args.logistic_batch_size, args.logistic_epochs, args.model_name, args.run_name, (unseen_tools_X_gelslim_train, unseen_tools_y_gelslim_train[0], unseen_tools_X_bubbles_train, unseen_tools_y_bubbles_train[0]), (unseen_tools_X_gelslim_test, unseen_tools_y_gelslim_test[0], unseen_tools_X_bubbles_test, unseen_tools_y_bubbles_test[0]), dataset_type, dataset_details, args.device)
 
         # # Classification task on training tool for thetas
         # classification_name = 'training_thetas_classification'

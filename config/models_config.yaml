@@ -14,13 +14,13 @@ simclr:
   projection_dim: 64 # "[...] to project the representation to a 128-dimensional latent space"
 
   # loss options
-  optimizer: "LARS" # or LARS (experimental)
+  optimizer: "Adam" # or LARS (experimental)
   weight_decay: 1.0e-6 # "optimized using LARS [...] and weight decay of 10−6"
   temperature: 0.5 # see appendix B.7.: Optimal temperature under different batch sizes
 
   # logistic regression options
   logistic_batch_size: 256
-  logistic_epochs: 500
+  logistic_epochs: 20
 
 barlow_twins:
   # train options
@@ -45,3 +45,120 @@ barlow_twins:
   # logistic regression options
   logistic_batch_size: 256
   logistic_epochs: 500
+
+T3:
+  train:
+    # img_size: 224 # TODO: not being used
+    batch_size: 64
+    dl_weight_type: "root" # how each dataloader is weighted according to number of batches. "equal", "invlinear", "root"
+    num_data_workers: 0
+    wandb: true
+    wandb_entity: "samanrod" # your wandb username
+    log_freq: 10 # how often to log to wandb
+    save_model: true
+    finetune_from: "" # path to a model to finetune / load from
+    # Will train for total_train_steps, during which will run eval for test_steps every test_every steps
+    total_train_steps: 100000
+    test_every: 750
+    test_steps: 50
+    generate_mae_visualizations: true
+
+    # whether to freeze the encoder and trunk
+    freeze_encoder: false
+    freeze_trunk: false
+    # whether to unfreeze the encoder and trunk at a given step. only effective when both freeze_encoder and freeze_trunk are true
+    scheduled_unfreeze: false 
+    scheduled_unfreeze_step: 20000
+
+    optimizer:
+      _target_: torch.optim.AdamW
+      lr: 1.0e-4
+      eps: 1.0e-6
+      weight_decay: 0.1
+    # the head and stem are updated at different frequencies. they can be trained with less learning rates.
+    nontrunk_lr_scale: 1.0 # 0.5
+
+    scheduler:
+      _target_: torch.optim.lr_scheduler.CosineAnnealingLR
+      T_max: ${train.total_train_steps}
+      eta_min: 1e-8
+
+  defaults:
+    - _self_
+    - network: pretrain1_mae_touch2touch
+    - datasets: 
+      - touch2touch_mae
+
+  # Network configuration for pretraining I with MAE
+  patch_size: 16
+  encoder_embed_dim: 384
+  encoder_heads: 6
+  encoder_depth: 3
+  trunk_depth: 9
+  mask_ratio: 0.4
+
+  encoders:
+    bubbles:
+      _target_: t3.models.MAEViTEncoder
+      mask_ratio: ${mask_ratio}
+      patch_size: ${patch_size}
+      embed_dim: ${encoder_embed_dim}
+      depth: ${encoder_depth}
+      num_heads: ${encoder_heads}
+      mlp_ratio: 4. 
+
+    gelslims:
+      _target_: t3.models.MAEViTEncoder
+      mask_ratio: ${mask_ratio}
+      patch_size: ${patch_size}
+      embed_dim: ${encoder_embed_dim}
+      depth: ${encoder_depth}
+      num_heads: ${encoder_heads}
+      mlp_ratio: 4. 
+      
+  shared_trunk:
+    _target_: t3.models.TransformerTrunk
+    embed_dim: ${encoder_embed_dim}
+    depth: ${trunk_depth}
+    num_heads: ${encoder_heads}
+    mlp_ratio: 4.
+    pooling_type: "cls"
+
+  decoders:
+    mae_recon_single:
+      _target_: t3.models.MAEViTDecoder
+      patch_size: ${patch_size}
+      embed_dim: ${encoder_embed_dim}
+      decoder_embed_dim: 512
+      decoder_depth: 8
+      decoder_num_heads: 16
+      mlp_ratio: 4. 
+      loss_func:
+        _target_: t3.models.MAEReconLoss
+        patch_size: 16
+        norm_pix_loss: true # true for better representation learning, false for pixel-based loss for better reconstruction aka visualization
+
+  # Dataset configuration
+  bubbles:
+    activate: true
+    eval_only: false
+    data_loader:
+      _target_: t3.data_loader.SingleTowerMAETouch2Touch
+      data_dir: "/home/samanta/tactile_style_transfer/new_processed_data/bubbles"
+      encoder_domain: "bubbles"
+      decoder_domain: "mae_recon_single"
+      img_norm:
+        mean: [0.0048, 0.0048, 0.0048]
+        std: [0.0047, 0.0047, 0.0047]
+
+  gelslims:
+    activate: true
+    eval_only: false
+    data_loader:
+      _target_: t3.data_loader.SingleTowerMAETouch2Touch
+      data_dir: "/home/samanta/tactile_style_transfer/new_processed_data/gelslims"
+      encoder_domain: "gelslims"
+      decoder_domain: "mae_recon_single"
+      img_norm:
+        mean: [-0.0107, -0.0063, -0.0087]
+        std: [0.0687, 0.0428, 0.0576]

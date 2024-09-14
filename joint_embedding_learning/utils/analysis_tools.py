@@ -4,27 +4,30 @@ import numpy as np
 from sklearn.manifold import TSNE
 import matplotlib.pyplot as plt
 
-def load_embeddings(results_path, split='train', sensor='bubbles', dataset = 'stl_10'):
+def load_embeddings(results_path, split_='train', sensor='bubbles', dataset = 'stl_10'):
     if dataset == 'stl_10':
-        embeddings = torch.load(os.path.join(results_path, f'{split}_X.pt'))
-        labels = torch.load(os.path.join(results_path, f'{split}_y.pt'))
+        embeddings = torch.load(os.path.join(results_path, f'{split_}_X.pt'))
+        labels = torch.load(os.path.join(results_path, f'{split_}_y.pt'))
         sensor_array = np.array([0]*len(labels))
     
     else:
         if sensor == 'both':
-            g_embeddings = torch.load(os.path.join(results_path, f'{split}_X_gelslim.pt'))
-            g_labels = torch.load(os.path.join(results_path, f'{split}_y_gelslim.pt'))
-            b_embeddings = torch.load(os.path.join(results_path, f'{split}_X_bubbles.pt'))
-            b_labels = torch.load(os.path.join(results_path, f'{split}_y_bubbles.pt'))
+            g_embeddings = torch.load(os.path.join(results_path, f'{split_}_X_gelslim.pt'))
+            g_labels = torch.load(os.path.join(results_path, f'{split_}_y_gelslim.pt'))
+            b_embeddings = torch.load(os.path.join(results_path, f'{split_}_X_bubbles.pt'))
+            b_labels = torch.load(os.path.join(results_path, f'{split_}_y_bubbles.pt'))
 
             embeddings = np.concatenate([g_embeddings, b_embeddings], axis=0)
             labels = np.concatenate([g_labels, b_labels], axis=0)
             sensor_array = np.array([0]*len(g_labels) + [1]*len(b_labels))
             
         else:
-            embeddings = torch.load(os.path.join(results_path, f'{split}_X_{sensor}.pt'))
-            labels = torch.load(os.path.join(results_path, f'{split}_y_{sensor}.pt'))
-            sensor_array = np.array([0]*len(labels))
+            # import pdb; pdb.set_trace()
+            embeddings = torch.load(os.path.join(results_path, f'{split_}_X_{sensor}.pt'))
+            split_2 = split_.split('tsne_')[-1]
+            labels = torch.load(os.path.join(results_path, f'{split_2}_y_{sensor}.pt'))[0]
+            sensor_idx = 0 if sensor == 'gelslim' else 1
+            sensor_array = np.array([sensor_idx]*len(labels))
 
     return embeddings, labels, sensor_array
 
@@ -61,7 +64,7 @@ def plot_tsne_tactile(tsne_embeddings, labels, colors, sensor='bubbles', sensor_
     # plt.show()
     return
 
-def plot_tsne(tsne_embeddings, labels, alpha=1.0, marker_style='o'):
+def plot_tsne(ax, tsne_embeddings, labels, alpha=1.0, marker_style='o'):
     unique_labels = np.unique(labels)
     # colors = plt.cm.tab10(np.linspace(0, 1, len(unique_labels)))
     colors = plt.get_cmap('tab20')(np.linspace(0, 1, len(unique_labels)))
@@ -69,5 +72,5 @@ def plot_tsne(tsne_embeddings, labels, alpha=1.0, marker_style='o'):
 
     for label in np.unique(labels):
         indices = labels == label
-        plt.scatter(tsne_embeddings[indices, 0], tsne_embeddings[indices, 1], label=label, alpha=alpha, marker=marker_style, color=label_to_color[label], s=30)
+        ax.scatter(tsne_embeddings[indices, 0], tsne_embeddings[indices, 1], label=label, alpha=alpha, marker=marker_style, color=label_to_color[label], s=30)
     return

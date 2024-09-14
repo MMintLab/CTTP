@@ -95,9 +95,18 @@ def get_datasets_stats(datasets, batch_size = 64):
     gelslim_diff_min = [1000, 1000, 1000]
     gelslim_diff_max = [-1000, -1000, -1000]
 
+    pose_total_psum = 0
+    pose_total_psum_sq = 0
+    pose_total_count = 0
+    pose_min = [1000, 1000, 1000]
+    pose_max = [-1000, -1000, -1000]
+
+
+
     for dataset in datasets:
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-        for i, ((bubbles_img, gelslim_diff), _) in enumerate(dataloader):
+        for i, ((bubbles_img, gelslim_diff), label) in enumerate(dataloader):
+            # print('Index of stats:', i)
             bubbles_img_min = min(bubbles_img_min, bubbles_img.min())
             bubbles_img_max = max(bubbles_img_max, bubbles_img.max())
             bubbles_img_psum = bubbles_img.sum()
@@ -109,6 +118,28 @@ def get_datasets_stats(datasets, batch_size = 64):
             gelslim_diff_psum = gelslim_diff.sum([0,2,3])
             gelslim_diff_psum_sq = (gelslim_diff**2).sum([0,2,3])
             gelslim_diff_count = gelslim_diff[:,0].numel()
+
+            ## pose stats
+            y_grasp_object = - label[2]
+            z_grasp_object = - label[3]
+            theta_grasp_object = label[1]
+            R1 = torch.cat([torch.cos(theta_grasp_object).unsqueeze(1), -torch.sin(theta_grasp_object).unsqueeze(1)], dim=1)
+            R2 = torch.cat([torch.sin(theta_grasp_object).unsqueeze(1), torch.cos(theta_grasp_object).unsqueeze(1)], dim=1)
+            R = torch.cat([R1.unsqueeze(2), R2.unsqueeze(2)], dim=2)
+            t = torch.cat([y_grasp_object.unsqueeze(1), z_grasp_object.unsqueeze(1)], dim=1).unsqueeze(2)
+            R_inv = torch.inverse(R)
+            t_inv = -torch.bmm(R_inv, t)
+            theta_object_grasp = - theta_grasp_object
+            y_object_grasp = t_inv[:,0,:]
+            z_object_grasp = t_inv[:,1,:]
+            pose = torch.cat([y_object_grasp, z_object_grasp, theta_object_grasp.unsqueeze(1)], dim=1)
+            # import pdb; pdb.set_trace()
+            pose_min = [min(pose_min[0], pose[:,0].min()), min(pose_min[1], pose[:,1].min()), min(pose_min[2], pose[:,2].min())]
+            pose_max = [max(pose_max[0], pose[:,0].max()), max(pose_max[1], pose[:,1].max()), max(pose_max[2], pose[:,2].max())]
+            pose_psum = pose.sum([0])
+            pose_psum_sq = (pose**2).sum([0])
+            pose_count = pose[:,0].numel()
+            ## pose stats
     
             bubbles_img_totat_psum += bubbles_img_psum
             bubbles_img_totat_psum_sq += bubbles_img_psum_sq
@@ -118,13 +149,22 @@ def get_datasets_stats(datasets, batch_size = 64):
             gelslim_diff_totat_psum_sq += gelslim_diff_psum_sq
             gelslim_diff_total_count += gelslim_diff_count
 
+            pose_total_psum += pose_psum
+            pose_total_psum_sq += pose_psum_sq
+            pose_total_count += pose_count
+
+        print('Dataset done')
+
     bubbles_img_mean = bubbles_img_totat_psum / bubbles_img_total_count
     bubbles_img_std = torch.sqrt((bubbles_img_totat_psum_sq / bubbles_img_total_count) - bubbles_img_mean**2)
 
     gelslim_diff_mean = gelslim_diff_totat_psum / gelslim_diff_total_count
     gelslim_diff_std = torch.sqrt((gelslim_diff_totat_psum_sq / gelslim_diff_total_count) - gelslim_diff_mean**2)
 
-    return bubbles_img_mean, bubbles_img_std,bubbles_img_min, bubbles_img_max, gelslim_diff_mean, gelslim_diff_std, gelslim_diff_min, gelslim_diff_max
+    pose_mean = pose_total_psum / pose_total_count
+    pose_std = torch.sqrt((pose_total_psum_sq / pose_total_count) - pose_mean**2)
+
+    return bubbles_img_mean, bubbles_img_std,bubbles_img_min, bubbles_img_max, gelslim_diff_mean, gelslim_diff_std, gelslim_diff_min, gelslim_diff_max, pose_mean, pose_std, pose_min, pose_max
 
 def get_data_in_range(bubbles_stats, gelslims_stats, device = 'cuda:0'):
     bubbles_img_mean = torch.tensor(bubbles_stats['mean'], device=device)

@@ -3,6 +3,8 @@
 from joint_embedding_learning.barlow_twins.barlow import BarlowTwins
 from simclr import SimCLR
 from simclr.modules import NT_Xent, get_resnet
+from t3.models import T3
+from omegaconf import OmegaConf  # Import OmegaConf
 
 import torch
 import os
@@ -63,6 +65,19 @@ def get_trained_model(model_name, model_details, dataset_type, run_name, device)
             model.load_state_dict(torch.load(model_fp, map_location=device))
             
         model = model.to(device)
+        model.eval()
+
+        return model
+    
+    elif model_name == 'T3':
+        if isinstance(model_details, dict):
+            model_details = OmegaConf.create(model_details)
+        model = T3(model_details)
+        model_fp = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), 'checkpoints', dataset_type, model_name, run_name)
+        model.load_components(model_fp)
+        model = model.to(device)
+        model.freeze_encoder()
+        model.freeze_trunk()
         model.eval()
 
         return model
