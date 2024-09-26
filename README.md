@@ -22,7 +22,7 @@ pip install -e .
 ```
 
 # Checkpoints
-Download checkpoints to CTTP root folder: https://drive.google.com/drive/folders/1A5bRuciQ4nuSa1r1X7JB7pMYJHJ6j6vc
+Download checkpoint to CTTP root folder: https://drive.google.com/drive/folders/1A5bRuciQ4nuSa1r1X7JB7pMYJHJ6j6vc
 
 CTTP Model Checkpoint: https://drive.google.com/file/d/10_HR54aKSUuF3hQPTY1zLOgYuBHMITch/view?usp=drive_link
 
