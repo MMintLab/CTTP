@@ -21,6 +21,9 @@ cd t3
 pip install -e .
 ```
 
+# Checkpoints
+Download checkpoints to CTTP root folder: https://drive.google.com/drive/folders/1A5bRuciQ4nuSa1r1X7JB7pMYJHJ6j6vc
+
 # Train CTTP Model
 ```
 cd scripts
