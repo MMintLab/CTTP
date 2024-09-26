@@ -22,5 +22,13 @@ pip install -e .
 ```
 
 # Train CTTP Model
+```
+cd scripts
+python train_model.py --model_name simclr --device cuda:0 --dataset dataset_1
+```
 
 # Evaluate CTTP Model
+```
+cd joint_embedding_learning/
+python evaluation.py --dataset_name dataset_1 --run_name dataset_1_run_B_128 --model_name simclr
+```
