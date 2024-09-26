@@ -8,6 +8,12 @@ Paper: https://www.arxiv.org/abs/2409.08269
 
 Dataset: https://drive.google.com/drive/folders/15vWo5AWw9xVKE1wHbLhzm40ClPyRBYk5?usp=sharing
 
+# Before installation
+Install SimCLR package: https://github.com/Spijkervet/SimCLR/tree/master
+'''
+pip install simclr
+'''
+
 # Train CTTP Model
 
 # Evaluate CTTP Model
