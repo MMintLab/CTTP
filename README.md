@@ -10,9 +10,9 @@ Dataset: https://drive.google.com/drive/folders/15vWo5AWw9xVKE1wHbLhzm40ClPyRBYk
 
 # Before installation
 Install SimCLR package: https://github.com/Spijkervet/SimCLR/tree/master
-'''
+```
 pip install simclr
-'''
+```
 
 # Train CTTP Model
 
